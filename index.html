@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        if (localStorage.getItem('meridian-theme') === 'dark')
+          document.documentElement.dataset.theme = 'dark'
+        if (localStorage.getItem('meridian-lang') === 'en')
+          document.documentElement.lang = 'en'
+      } catch (e) {}
+    </script>
+    <title>MERIDIAN — независимая часовая мануфактура</title>
+    <meta
+      name="description"
+      content="MERIDIAN — независимая часовая мануфактура. Механические калибры собственной разработки, гильоширование вручную, тиражи до 50 экземпляров."
+    />
+    <meta property="og:title" content="MERIDIAN — независимая часовая мануфактура" />
+    <meta
+      property="og:description"
+      content="Механические калибры собственной разработки. Пятьдесят экземпляров в год. Предзаказ — из ателье в Шаффхаузене."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
