@@ -7,10 +7,15 @@ import { useI18n } from '../../i18n'
 
 gsap.registerPlugin(ScrollTrigger)
 
+/* false — вернуть процедурный SVG-калибр вместо видео */
+const USE_VIDEO = true
+const VIDEO_SRC = '/assets/movement-explode.mp4'
+
 export default function Movement() {
   const { t } = useI18n()
   const sectionRef = useRef<HTMLElement>(null)
   const pinRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -25,6 +30,37 @@ export default function Movement() {
 
       if (reduce) return
 
+      const video = videoRef.current
+      let videoTarget = 0
+
+      const onUpdate = (self: ScrollTrigger) => {
+        setActive(Math.min(3, Math.floor(self.progress * 4)))
+        if (video?.duration) {
+          videoTarget = self.progress * (video.duration - 0.05)
+        }
+      }
+
+      if (USE_VIDEO && video) {
+        /* плавная перемотка: currentTime догоняет цель через lerp,
+           это сглаживает редкие ключевые кадры h264 */
+        const seek = () => {
+          if (!video.duration) return
+          const delta = videoTarget - video.currentTime
+          if (Math.abs(delta) > 0.02) {
+            video.currentTime = video.currentTime + delta * 0.18
+          }
+        }
+        gsap.ticker.add(seek)
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: 'top top',
+          end: '+=340%',
+          pin: pinRef.current,
+          onUpdate,
+        })
+        return () => gsap.ticker.remove(seek)
+      }
+
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -33,7 +69,7 @@ export default function Movement() {
           end: '+=340%',
           scrub: 0.6,
           pin: pinRef.current,
-          onUpdate: (self) => setActive(Math.min(3, Math.floor(self.progress * 4))),
+          onUpdate,
         },
       })
 
@@ -62,12 +98,35 @@ export default function Movement() {
           </h2>
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center">
-          <Tilt max={6} data-cursor="zoom" className="w-[min(56vmin,480px)]">
-            <Calibre className="dial-shadow w-full" />
-          </Tilt>
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-10 px-6 md:grid md:grid-cols-[minmax(0,1fr)_19rem] md:gap-16">
+          {USE_VIDEO ? (
+            <Tilt max={5} data-cursor="zoom" className="relative w-[min(78vmin,620px)] md:w-full">
+              {/* тёплое свечение вписывает кадр в фон */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-[-14%] rounded-full bg-[radial-gradient(circle,rgb(161_98_7/0.13),transparent_65%)] blur-2xl"
+              />
+              {/* края растворяются маской — видео лежит в среде, а не в рамке */}
+              <div className="relative overflow-hidden [mask-image:radial-gradient(72%_64%_at_48%_53%,#000_52%,transparent_90%)]">
+                <video
+                  ref={videoRef}
+                  src={VIDEO_SRC}
+                  muted
+                  playsInline
+                  preload="auto"
+                  disablePictureInPicture
+                  aria-label={t.sections.movement.calibreAria}
+                  className="w-full scale-[1.07] [filter:saturate(0.9)_contrast(1.02)_brightness(1.03)]"
+                />
+              </div>
+            </Tilt>
+          ) : (
+            <Tilt max={6} data-cursor="zoom" className="w-[min(56vmin,480px)] justify-self-center">
+              <Calibre className="dial-shadow w-full" />
+            </Tilt>
+          )}
 
-          <div className="absolute inset-x-6 bottom-6 h-44 md:inset-x-auto md:top-1/2 md:right-[7%] md:bottom-auto md:h-56 md:w-80 md:-translate-y-1/2">
+          <div className="relative h-44 w-full md:h-60">
             {t.sections.movement.steps.map((step, i) => (
               <div key={step.title} data-step className="absolute inset-0">
                 <p className="font-mono text-xs tracking-[0.3em] text-accent">
